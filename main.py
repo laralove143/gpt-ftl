@@ -7,7 +7,6 @@ from os import environ
 
 load_dotenv()
 base_lang = environ.get("BASE_LANG")
-keep_comments = environ.get("KEEP_COMMENTS")
 model = environ.get("MODEL")
 root = environ.get("FTL_ROOT_PATH")
 
@@ -31,10 +30,6 @@ all_system_messages = {
     "output better translations of the section the line describes. ",
     "triple_hash_comment": "In the content you are given, lines starting with ### describe the entire content. Use "
     "this description to output better translations of the entire content.",
-    "keep_comments": "Lines starting with #, ## or ### are comments, use them to improve your translation as "
-    "instructed above but also translate them and include them in your output.",
-    "strip_comments": "Lines starting with #, ## or ### are comments, use them to improve your translation as "
-    "instructed above and do not include them in your output.",
     "placeable": "Text wrapped in { and } is a placeable, do not alter the text inside the placeable.",
 }
 
@@ -60,11 +55,6 @@ if __name__ == "__main__":
         all_system_messages["multi_lang"],
         all_system_messages["assignment"],
     ]
-
-    if keep_comments == "true":
-        system_messages_base.append(all_system_messages["keep_comments"])
-    else:
-        system_messages_base.append(all_system_messages["strip_comments"])
 
     user_message_start = f"Translate the following content to {languages}:\n"
 
