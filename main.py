@@ -59,7 +59,6 @@ if __name__ == "__main__":
         all_system_messages["role"],
         all_system_messages["multi_lang"],
         all_system_messages["assignment"],
-        all_system_messages["selection"],
     ]
 
     if keep_comments == "true":
@@ -84,6 +83,8 @@ if __name__ == "__main__":
 
             if "{" in content:
                 system_messages.append(all_system_messages["placeable"])
+            if "[" in content:
+                system_messages.append(all_system_messages["selection"])
 
             messages = [
                 {"role": "system", "content": content} for content in system_messages
