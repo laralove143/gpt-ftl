@@ -18,11 +18,12 @@ all_system_messages = {
     "multi_lang": "The top level keys in your JSON are the language codes of the languages you are translating to.",
     "assignment": "You are given a file in Fluent format which has variable name and source pairs separated by =. Each \
     variable name is the JSON key, and the value of that key is the translation of source. Do not translate the keys.",
-    "pluralization": "If the source you are given translates to different languages based on a number, the JSON value \
-    you output must be a list of JSON objects with three keys: count, translation and is_default. Count key's value \
-    must be one of zero, one, two, few, many, and other. Translation key's value must be the translation of the \
-    source for that count. Each JSON object must have a different translation. is_default key's value must be true \
-    for the translation that is the default translation. There must be one and only one default value.",
+    "selection": "If the source you are given translates to different text based on a variable, shown with the syntax \
+    { variable -> [variant] source_text }, the JSON value you output must be a list of JSON objects with 4 keys: \
+    variable, variant, translation, is_default. variable key's value must be the variable name in the source, do not \
+    change this. variant key's value must be the variant in the source, do not change this. translation key's value \
+    must be the translation for that variant, only translate this. is_default key's value must be true for the \
+    translation that is the default translation. There must be one and only one default value.",
     "single_hash_comment": "In the content you are given, there might be comment lines starting with # above a value, "
     "this line provides you context about the value it precedes, use this context to output better translations.",
     "double_hash_comment": "In the content you are given, lines starting with ## describe the section of the content "
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         all_system_messages["role"],
         all_system_messages["multi_lang"],
         all_system_messages["assignment"],
-        all_system_messages["pluralization"],
+        all_system_messages["selection"],
     ]
 
     if keep_comments == "true":
@@ -99,3 +100,4 @@ if __name__ == "__main__":
                 .choices[0]
                 .message.content
             )
+            print(translation)
