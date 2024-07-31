@@ -30,6 +30,7 @@ all_system_messages = {
     "instructed above but also translate them and include them in your output.",
     "strip_comments": "Lines starting with #, ## or ### are comments, use them to improve your translation as "
     "instructed above and do not include them in your output.",
+    "placeable": "Text wrapped in { and } is a placeable, do not alter the text inside the placeable.",
 }
 
 
@@ -76,6 +77,9 @@ if __name__ == "__main__":
                 system_messages.append(all_system_messages["double_hash_comment"])
             if "# " in content:
                 system_messages.append(all_system_messages["single_hash_comment"])
+
+            if "{" in content:
+                system_messages.append(all_system_messages["placeable"])
 
             messages = [
                 {"role": "system", "content": content} for content in system_messages
