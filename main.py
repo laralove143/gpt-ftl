@@ -12,10 +12,12 @@ root = environ.get("FTL_ROOT_PATH")
 
 client = OpenAI()
 
-system_messages = {
+all_system_messages = {
     "role": "You are a translator.",
     "assignment": "In the content you are given, each value is assigned to a variable with =, do not alter the "
     "variable names or the = sign.",
+    "multi_lang": 'Separate each language you translate to by adding a line of "START OF TRANSLATION FOR {'
+    'LANG_CODE}" before it where {LANG_CODE} is the language code you are given in the prompt.',
 }
 
 
@@ -35,7 +37,10 @@ if __name__ == "__main__":
         if os.path.isdir(os.path.join(root, lang)) and lang != base_lang
     ]
 
-    system_messages = [system_messages["role"], system_messages["assignment"]]
+    system_messages = [all_system_messages["role"], all_system_messages["assignment"]]
+
+    if len(languages) > 1:
+        system_messages.append(all_system_messages["multi_lang"])
 
     messages = [{"role": "system", "content": content} for content in system_messages]
 
@@ -52,3 +57,4 @@ if __name__ == "__main__":
                 .choices[0]
                 .message.content
             )
+            print(translation)
