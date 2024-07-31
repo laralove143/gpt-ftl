@@ -1,16 +1,10 @@
+import json
 import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
 from os import environ
 
-
-load_dotenv()
-base_lang = environ.get("BASE_LANG")
-model = environ.get("MODEL")
-root = environ.get("FTL_ROOT_PATH")
-
-client = OpenAI()
 
 all_system_messages = {
     "role": "You are a translator designed to output in JSON.",
@@ -34,61 +28,154 @@ all_system_messages = {
 }
 
 
-def files(lang):
-    return [
+class FtlFile:
+    def __init__(self, file):
+        self.content = file.read()
+
+    def get_translations(self, client, model, system_messages, languages):
+        if "### " in self.content:
+            system_messages.append(all_system_messages["triple_hash_comment"])
+        if "## " in self.content:
+            system_messages.append(all_system_messages["double_hash_comment"])
+        if "# " in self.content:
+            system_messages.append(all_system_messages["single_hash_comment"])
+
+        if "{" in self.content:
+            system_messages.append(all_system_messages["placeable"])
+        if "[" in self.content:
+            system_messages.append(all_system_messages["selection"])
+
+        messages = [
+            {"role": "system", "content": content} for content in system_messages
+        ]
+
+        messages.append(
+            {
+                "role": "user",
+                "content": f"Translate the following text to {', '.join(languages)}:\n{self.content}",
+            }
+        )
+
+        translations = json.loads(
+            client.chat.completions.create(
+                model=model,
+                messages=messages,
+                response_format={"type": "json_object"},
+            )
+            .choices[0]
+            .message.content
+        )
+
+        return [Translation(translation) for translation in translations.items()]
+
+
+class Translation:
+    def __init__(self, translation):
+        self.language = translation[0]
+        self.messages = [Message(message) for message in translation[1].items()]
+
+    def get_ftl(self):
+        return "\n".join(message.message() for message in self.messages) + "\n"
+
+
+class Message:
+    def __init__(self, message):
+        self.identifier = message[0]
+
+        val = message[1]
+
+        if isinstance(val, str):
+            self.value = val
+
+        if isinstance(val, list):
+            self.value = Selection(val).value()
+
+    def message(self):
+        return f"{self.identifier} = {self.value}"
+
+
+class Selection:
+    def __init__(self, val):
+        self.variable = val[0]["variable"]
+        self.variants = [Variant(variant) for variant in val]
+
+        for i, variant in enumerate(self.variants.copy()):
+            if variant.is_default:
+                continue
+
+            if variant.translation == self.default().translation:
+                self.variants.pop(i)
+
+    def default(self):
+        return next(variant for variant in self.variants if variant.is_default)
+
+    def value(self):
+        if len(self.variants) == 1:
+            return self.variants[0].translation
+
+        value = f"{{ {self.variable} ->\n"
+
+        for variant in self.variants:
+            value += "    "
+
+            if variant.is_default:
+                value += "*"
+
+            value += f"[{variant.variant}] {variant.translation}\n"
+
+        value += "}"
+
+        return value
+
+
+class Variant:
+    def __init__(self, val):
+        self.variant = val["variant"]
+        self.translation = val["translation"]
+        self.is_default = val["is_default"]
+
+
+def main():
+    load_dotenv()
+    base_lang = environ.get("BASE_LANG")
+    model = environ.get("MODEL")
+    root = environ.get("FTL_ROOT_PATH")
+
+    client = OpenAI()
+
+    system_messages = [
+        all_system_messages["role"],
+        all_system_messages["multi_lang"],
+        all_system_messages["assignment"],
+    ]
+
+    base_files = [
         filename
-        for filename in os.listdir(os.path.join(root, lang))
+        for filename in os.listdir(os.path.join(root, base_lang))
         if filename.endswith(".ftl")
     ]
 
-
-if __name__ == "__main__":
-    base_files = files(base_lang)
     languages = [
         lang
         for lang in os.listdir(root)
         if os.path.isdir(os.path.join(root, lang)) and lang != base_lang
     ]
 
-    system_messages_base = [
-        all_system_messages["role"],
-        all_system_messages["multi_lang"],
-        all_system_messages["assignment"],
-    ]
-
-    user_message_start = f"Translate the following content to {languages}:\n"
-
     for file in base_files:
         with open(os.path.join(root, base_lang, file), "r") as f:
-            content = f.read()
+            ftl_file = FtlFile(f)
 
-            system_messages = system_messages_base.copy()
-
-            if "### " in content:
-                system_messages.append(all_system_messages["triple_hash_comment"])
-            if "## " in content:
-                system_messages.append(all_system_messages["double_hash_comment"])
-            if "# " in content:
-                system_messages.append(all_system_messages["single_hash_comment"])
-
-            if "{" in content:
-                system_messages.append(all_system_messages["placeable"])
-            if "[" in content:
-                system_messages.append(all_system_messages["selection"])
-
-            messages = [
-                {"role": "system", "content": content} for content in system_messages
-            ]
-
-            messages.append({"role": "user", "content": user_message_start + content})
-
-            translation = (
-                client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    response_format={"type": "json_object"},
-                )
-                .choices[0]
-                .message.content
+            translations = ftl_file.get_translations(
+                client, model, system_messages.copy(), languages
             )
-            print(translation)
+
+            for translation in translations:
+                with open(
+                    os.path.join(root, translation.language, os.path.basename(f.name)),
+                    "w",
+                ) as translation_file:
+                    translation_file.write(translation.get_ftl())
+
+
+if __name__ == "__main__":
+    main()
