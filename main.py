@@ -14,11 +14,15 @@ root = environ.get("FTL_ROOT_PATH")
 client = OpenAI()
 
 all_system_messages = {
-    "role": "You are a translator.",
-    "assignment": "In the content you are given, each value is assigned to a variable with =, do not alter the "
-    "variable names or the = sign.",
-    "multi_lang": 'Separate each language you translate to by adding a line of "START OF TRANSLATION FOR {LANG_CODE}" '
-    "before it where {LANG_CODE} is the language code you are given in the prompt.",
+    "role": "You are a translator designed to output in JSON.",
+    "multi_lang": "The top level keys in your JSON are the language codes of the languages you are translating to.",
+    "assignment": "You are given a file in Fluent format which has variable name and source pairs separated by =. Each \
+    variable name is the JSON key, and the value of that key is the translation of source. Do not translate the keys.",
+    "pluralization": "If the source you are given translates to different languages based on a number, the JSON value \
+    you output must be a list of JSON objects with three keys: count, translation and is_default. Count key's value \
+    must be one of zero, one, two, few, many, and other. Translation key's value must be the translation of the \
+    source for that count. Each JSON object must have a different translation. is_default key's value must be true \
+    for the translation that is the default translation. There must be one and only one default value.",
     "single_hash_comment": "In the content you are given, there might be comment lines starting with # above a value, "
     "this line provides you context about the value it precedes, use this context to output better translations.",
     "double_hash_comment": "In the content you are given, lines starting with ## describe the section of the content "
@@ -52,11 +56,10 @@ if __name__ == "__main__":
 
     system_messages_base = [
         all_system_messages["role"],
+        all_system_messages["multi_lang"],
         all_system_messages["assignment"],
+        all_system_messages["pluralization"],
     ]
-
-    if len(languages) > 1:
-        system_messages_base.append(all_system_messages["multi_lang"])
 
     if keep_comments == "true":
         system_messages_base.append(all_system_messages["keep_comments"])
@@ -88,8 +91,11 @@ if __name__ == "__main__":
             messages.append({"role": "user", "content": user_message_start + content})
 
             translation = (
-                client.chat.completions.create(model=model, messages=messages)
+                client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    response_format={"type": "json_object"},
+                )
                 .choices[0]
                 .message.content
             )
-            print(translation)
