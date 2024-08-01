@@ -1,7 +1,17 @@
 import json
 import os
+import sqlite3
 
+import fluent.syntax.ast
+from fluent.syntax import parse
 from dotenv import load_dotenv
+from fluent.syntax.ast import (
+    ResourceComment,
+    GroupComment,
+    Comment,
+    Placeable,
+    SelectExpression,
+)
 from openai import OpenAI
 from os import environ
 
@@ -30,20 +40,27 @@ all_system_messages = {
 
 class FtlFile:
     def __init__(self, file):
+        self.body = parse(file.read()).body
         self.content = file.read()
 
     def get_translations(self, client, model, system_messages, languages):
-        if "### " in self.content:
+        if any(isinstance(elem, ResourceComment) for elem in self.body):
             system_messages.append(all_system_messages["triple_hash_comment"])
-        if "## " in self.content:
+        if any(isinstance(elem, GroupComment) for elem in self.body):
             system_messages.append(all_system_messages["double_hash_comment"])
-        if "# " in self.content:
+        if any(isinstance(elem, Comment) for elem in self.body):
             system_messages.append(all_system_messages["single_hash_comment"])
 
-        if "{" in self.content:
-            system_messages.append(all_system_messages["placeable"])
-        if "[" in self.content:
-            system_messages.append(all_system_messages["selection"])
+        for message in self.body:
+            if not isinstance(message, fluent.syntax.ast.Message):
+                continue
+            for elem in message.value.elements:
+                if not isinstance(elem, Placeable):
+                    continue
+                system_messages.append(all_system_messages["placeable"])
+                if isinstance(elem.expression, SelectExpression):
+                    system_messages.append(all_system_messages["selection"])
+                    break
 
         messages = [
             {"role": "system", "content": content} for content in system_messages
@@ -133,6 +150,16 @@ class Variant:
         self.variant = val["variant"]
         self.translation = val["translation"]
         self.is_default = val["is_default"]
+
+
+class Db:
+    def __init__(self):
+        self.conn = sqlite3.connect("cache.sqlite")
+        self.c = self.conn.cursor()
+        self.c.execute(
+            "CREATE TABLE IF NOT EXISTS translated_messages (identifier TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+        self.conn.commit()
 
 
 def main():
