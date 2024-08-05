@@ -9,7 +9,6 @@ from fluent.syntax.ast import (
 
 system_messages = {
     "role": "You are a translator designed to output in JSON.",
-    "multi_lang": "The top level keys in your JSON are the language codes of the languages you are translating to.",
     "assignment": "You are given a file in Fluent format which has variable name and source pairs separated by =. Each \
     variable name is the JSON key, and the value of that key is the translation of source. Do not translate the keys.",
     "selection": "If the source you are given translates to different text based on a variable, shown with the syntax \
@@ -18,13 +17,13 @@ system_messages = {
     change this. variant key's value must be the variant in the source, do not change this. translation key's value \
     must be the translation for that variant, only translate this. is_default key's value must be true for the \
     translation that is the default translation. There must be one and only one default value.",
-    "single_hash_comment": "In the content you are given, there might be comment lines starting with # above a value, "
-    "this line provides you context about the value it precedes, use this context to output better translations.",
-    "double_hash_comment": "In the content you are given, lines starting with ## describe the section of the content "
-    "until the next lines starting with ## or the end of content. Use this description to "
-    "output better translations of the section the line describes. ",
-    "triple_hash_comment": "In the content you are given, lines starting with ### describe the entire content. Use "
-    "this description to output better translations of the entire content.",
+    "single_hash_comment": "In the content you are given, there might be comment lines starting with # above a value, \
+    these lines describe the value it precedes, use this description to output better translations for the value.",
+    "double_hash_comment": "In the content you are given, lines starting with ## describe the section of the content \
+    until the next lines starting with ## or the end of content. Use this description to output better translations of \
+    the section the line describes.",
+    "triple_hash_comment": "In the content you are given, lines starting with ### describe the entire content. Use \
+    this description to output better translations of the entire content.",
     "placeable": "Text wrapped in { and } is a placeable, do not alter the text inside the placeable.",
 }
 
@@ -32,7 +31,6 @@ system_messages = {
 def get_system_messages_for_body(body):
     messages = [
         system_messages["role"],
-        system_messages["multi_lang"],
         system_messages["assignment"],
     ]
 

@@ -1,14 +1,23 @@
 class Parser:
     def __init__(self, json):
-        self.language = json[0]
-        self.messages = [MessageParser(message) for message in json[1].items()]
+        self.messages = [MessageParser(message) for message in json.items()]
 
     def get_ftl(self):
         return "\n".join(message.get_ftl() for message in self.messages) + "\n"
 
 
 class MessageParser:
-    def __init__(self, json):
+    def __init__(self, json=None, ftl_content=None, ftl_message=None):
+        self.identifier = None
+        self.value = None
+        self.comments = None
+
+        if json:
+            self.init_from_json(json)
+        if ftl_content:
+            self.init_from_ftl(ftl_content, ftl_message)
+
+    def init_from_json(self, json):
         self.identifier = json[0]
 
         json_val = json[1]
@@ -19,8 +28,20 @@ class MessageParser:
         if isinstance(json_val, list):
             self.value = SelectionParser(json_val).get_ftl()
 
+    def init_from_ftl(self, content, message):
+        self.identifier = message.id.name
+        self.value = content[message.value.span.start : message.value.span.end]
+        self.comments = message.comment.content if message.comment else None
+
     def get_ftl(self):
-        return f"{self.identifier} = {self.value}"
+        ftl = ""
+
+        if self.comments:
+            ftl += "\n".join("# " + line for line in self.comments.split("\n")) + "\n"
+
+        ftl += f"{self.identifier} = {self.value}"
+
+        return ftl
 
 
 class SelectionParser:

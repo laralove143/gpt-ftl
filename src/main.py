@@ -1,11 +1,10 @@
 import os
 
-from ftl_file import FtlFile
-from db import Db
-
 from dotenv import load_dotenv
 from openai import OpenAI
 from os import environ
+
+from src.ftl_file import get_base_files, get_file, get_path
 
 
 def main():
@@ -15,35 +14,21 @@ def main():
     root = environ.get("FTL_ROOT_PATH")
 
     client = OpenAI()
-    db = Db()
 
-    base_files = [
-        filename
-        for filename in os.listdir(os.path.join(root, base_lang))
-        if filename.endswith(".ftl")
-    ]
+    base_files = get_base_files(root, base_lang)
 
-    languages = [
-        lang
-        for lang in os.listdir(root)
-        if os.path.isdir(os.path.join(root, lang)) and lang != base_lang
-    ]
+    for base_file in base_files:
+        for lang in os.listdir(root):
+            path = get_path(root, lang, base_file.name)
+            file = get_file(path, lang)
 
-    for file in base_files:
-        with open(os.path.join(root, base_lang, file), "r") as f:
-            ftl_file = FtlFile(f)
-            ftl_file.exclude_cached(db)
+            translation = file.get_translation(base_file, client, model)
 
-            translations = ftl_file.get_translations(client, model, languages)
+            if not translation:
+                continue
 
-            for translation in translations:
-                with open(
-                    os.path.join(root, translation.language, os.path.basename(f.name)),
-                    "w",
-                ) as translation_file:
-                    translation_file.write(translation.get_ftl())
-
-            db.insert_ftl_file(ftl_file)
+            with open(path, "a") as translation_file:
+                translation_file.write(translation.get_ftl())
 
 
 if __name__ == "__main__":
