@@ -1,7 +1,7 @@
 import json
 import os
 
-from parser import Parser, MessageParser
+from parser import MessageParser, Parser
 from system_messages import get_system_messages_for_body
 
 from fluent.syntax import parse
@@ -21,7 +21,7 @@ class FtlFile:
 
             self.message_identifiers.append(message.id.name)
 
-    def get_translation(self, base_file, client, model):
+    def write_translation(self, base_file, root, client, model):
         translate_messages = base_file.messages_to_translate(self.message_identifiers)
         if not translate_messages:
             return None
@@ -39,17 +39,17 @@ class FtlFile:
             }
         )
 
-        translation = json.loads(
-            client.chat.completions.create(
-                model=model,
-                messages=messages,
-                response_format={"type": "json_object"},
-            )
-            .choices[0]
-            .message.content
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            response_format={"type": "json_object"},
         )
 
-        return Parser(translation)
+        translation = json.loads(response.choices[0].message.content)
+        parser = Parser(translation)
+
+        with open(os.path.join(root, self.lang, self.name), "a") as f:
+            f.write(parser.get_ftl())
 
 
 class BaseFtlFile(FtlFile):

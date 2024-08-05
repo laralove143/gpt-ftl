@@ -1,4 +1,5 @@
 import os
+from threading import Thread
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -17,18 +18,23 @@ def main():
 
     base_files = get_base_files(root, base_lang)
 
+    threads = []
     for base_file in base_files:
         for lang in os.listdir(root):
+            if lang == base_lang:
+                continue
+
             path = get_path(root, lang, base_file.name)
             file = get_file(path, lang)
 
-            translation = file.get_translation(base_file, client, model)
+            thread = Thread(
+                target=file.write_translation, args=(base_file, root, client, model)
+            )
+            thread.start()
+            threads.append(thread)
 
-            if not translation:
-                continue
-
-            with open(path, "a") as translation_file:
-                translation_file.write(translation.get_ftl())
+    for thread in threads:
+        thread.join()
 
 
 if __name__ == "__main__":
