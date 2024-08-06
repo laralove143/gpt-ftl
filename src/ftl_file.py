@@ -2,6 +2,7 @@ import json
 import os
 
 from parser import MessageParser, Parser
+from print_colored import print_warning, format_value, format_list
 from system_messages import get_system_messages_for_body
 
 from fluent.syntax import parse
@@ -24,7 +25,16 @@ class FtlFile:
     def write_translation(self, base_file, root, client, model):
         translate_messages = base_file.messages_to_translate(self.message_identifiers)
         if not translate_messages:
-            return None
+            print_warning(
+                f"Skipping {format_value(base_file.name)} for {format_value(self.lang)}. All messages are already "
+                "translated."
+            )
+            return
+        if translate_messages != base_file.messages:
+            print_warning(
+                f"Skipping already translated messages in {format_value(base_file.name)} "
+                f"for {format_value(self.lang)}:\n{format_list([message.identifier for message in translate_messages])}"
+            )
 
         translate_content = "\n".join(
             message.get_ftl() for message in translate_messages
