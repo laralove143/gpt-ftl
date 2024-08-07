@@ -2,10 +2,9 @@ import os
 from threading import Thread
 
 import colorama
-from dotenv import load_dotenv
 from openai import OpenAI
-from os import environ
 
+from config import Config
 from ftl_file import get_base_files, get_file, get_path
 from print_colored import (
     print_action_start,
@@ -14,6 +13,7 @@ from print_colored import (
     format_value,
     format_dict,
     format_list,
+    print_error,
 )
 
 
@@ -23,10 +23,16 @@ def main():
     print_action_start(format_value("Welcome to GPT FTL!"))
 
     print_action_start("Loading configuration...")
-    load_dotenv()
-    base_lang = environ.get("BASE_LANG")
-    model = environ.get("MODEL")
-    root = environ.get("FTL_ROOT_PATH")
+    config = Config()
+    api_key = config["openai_api_key"]
+    base_lang = config["base_lang"]
+    model = config["model"]
+    root = config["ftl_root_path"]
+    if not all([api_key, base_lang, model, root]):
+        print_error(
+            f"Missing configuration, please fill in {format_value("config.toml")}."
+        )
+        return
     print_action_done(
         f"Configuration loaded:\n{format_dict({
             "Base language": base_lang,
@@ -35,7 +41,7 @@ def main():
         })}"
     )
 
-    client = OpenAI()
+    client = OpenAI(api_key=api_key)
 
     print_action_start("Getting files to translate...")
     base_files = get_base_files(root, base_lang)
@@ -54,7 +60,7 @@ def main():
             file = get_file(path, lang)
 
             thread = Thread(
-                target=file.write_translation, args=(base_file, root, client, model)
+                target=file.write_translation, args=(base_file, client, config)
             )
 
             print_batch_action(

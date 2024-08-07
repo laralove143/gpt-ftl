@@ -3,7 +3,6 @@ import os
 
 from parser import MessageParser, Parser
 from print_colored import print_warning, format_value, format_list
-from system_messages import get_system_messages_for_body
 
 from fluent.syntax import parse
 from fluent.syntax.ast import Message
@@ -22,7 +21,7 @@ class FtlFile:
 
             self.message_identifiers.append(message.id.name)
 
-    def write_translation(self, base_file, root, client, model):
+    def write_translation(self, base_file, client, config):
         translate_messages = base_file.messages_to_translate(self.message_identifiers)
         if not translate_messages:
             print_warning(
@@ -40,17 +39,9 @@ class FtlFile:
             message.get_ftl() for message in translate_messages
         )
 
-        messages = get_system_messages_for_body(base_file.body)
-
-        messages.append(
-            {
-                "role": "user",
-                "content": f"Translate the following text to {self.lang}:\n{translate_content}",
-            }
-        )
-
+        messages = config.get_messages(base_file.body, self.lang, translate_content)
         response = client.chat.completions.create(
-            model=model,
+            model=config["model"],
             messages=messages,
             response_format={"type": "json_object"},
         )
@@ -58,7 +49,9 @@ class FtlFile:
         translation = json.loads(response.choices[0].message.content)
         parser = Parser(translation)
 
-        with open(os.path.join(root, self.lang, self.name), "a") as f:
+        with open(
+            os.path.join(config["ftl_root_path"], self.lang, self.name), "a"
+        ) as f:
             f.write(parser.get_ftl())
 
 

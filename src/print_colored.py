@@ -22,6 +22,10 @@ def print_warning(s):
     print_with_lock(Fore.YELLOW + s)
 
 
+def print_error(s):
+    print_with_lock(Fore.RED + s)
+
+
 def print_action_start(s):
     print_with_lock(Fore.BLUE + s)
 
