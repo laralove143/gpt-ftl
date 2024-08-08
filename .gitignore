@@ -1,2 +1,4 @@
-config.toml
 .idea
+build
+dist
+src/gpt_ftl.egg-info

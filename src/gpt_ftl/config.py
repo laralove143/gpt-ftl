@@ -1,3 +1,6 @@
+import importlib.resources
+import os.path
+
 import tomli
 import tomli_w
 from fluent.syntax.ast import (
@@ -9,26 +12,38 @@ from fluent.syntax.ast import (
     SelectExpression,
 )
 
+from gpt_ftl.print_colored import print_action_done, format_value, print_error
+
 
 class Config:
     def __init__(self):
+        default = importlib.resources.open_text("gpt_ftl", "config.toml").read()
 
-        with open("config.toml", "rb") as f:
+        if os.name == "nt":
+            config_path = os.path.join(os.getenv("APPDATA"), "gpt_ftl/config.toml")
+        else:
+            config_path = os.path.expanduser("~/.config/gpt_ftl/config.toml")
+
+        if not os.path.exists(config_path):
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+
+            with open(config_path, "w") as f:
+                f.write(default)
+
+            print_action_done(
+                f"Created default configuration file at {format_value(config_path)}. Edit it to change or add prompts."
+            )
+
+        with open(config_path, "rb") as f:
             toml = tomli.load(f)
 
         self.toml = toml
 
     def __getitem__(self, item):
-        try:
-            return self.toml[item]
-        except KeyError:
-            return
+        return self.toml[item]
 
     def __setitem__(self, key, value):
-        try:
-            self.toml[key] = value
-        except KeyError:
-            return
+        self.toml[key] = value
 
         with open("config.toml", "wb") as f:
             tomli_w.dump(self.toml, f)
@@ -73,3 +88,13 @@ class Config:
         return [
             {"role": "system", "content": content} for content in system_messages
         ] + [{"role": "user", "content": user_message}]
+
+
+def get_env(key):
+    val = os.getenv(key)
+
+    if not val:
+        print_error(f"Please set the environment variable: {format_value(key)}.")
+        exit(1)
+
+    return val

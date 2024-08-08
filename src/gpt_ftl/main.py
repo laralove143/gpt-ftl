@@ -4,16 +4,15 @@ from threading import Thread
 import colorama
 from openai import OpenAI
 
-from config import Config
-from ftl_file import get_base_files, get_file, get_path
-from print_colored import (
+from gpt_ftl.config import Config, get_env
+from gpt_ftl.ftl_file import get_base_files, get_file, get_path
+from gpt_ftl.print_colored import (
     print_action_start,
     print_action_done,
     print_batch_action,
     format_value,
     format_dict,
     format_list,
-    print_error,
 )
 
 
@@ -24,15 +23,12 @@ def main():
 
     print_action_start("Loading configuration...")
     config = Config()
-    api_key = config["openai_api_key"]
-    base_lang = config["base_lang"]
-    model = config["model"]
-    root = config["ftl_root_path"]
-    if not all([api_key, base_lang, model, root]):
-        print_error(
-            f"Missing configuration, please fill in {format_value("config.toml")}."
-        )
-        return
+
+    api_key = get_env("OPENAI_API_KEY")
+    base_lang = get_env("BASE_LANG")
+    model = get_env("MODEL")
+    root = get_env("FTL_ROOT_PATH")
+
     print_action_done(
         f"Configuration loaded:\n{format_dict({
             "Base language": base_lang,

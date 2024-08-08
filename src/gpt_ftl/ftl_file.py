@@ -1,11 +1,11 @@
 import json
 import os
 
-from parser import MessageParser, Parser
-from print_colored import print_warning, format_value, format_list
-
 from fluent.syntax import parse
 from fluent.syntax.ast import Message
+
+from gpt_ftl.parser import MessageParser, Parser
+from gpt_ftl.print_colored import print_warning, format_value, format_list
 
 
 class FtlFile:
