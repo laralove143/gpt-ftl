@@ -41,7 +41,7 @@ class FtlFile:
 
         messages = config.get_messages(base_file.body, self.lang, translate_content)
         response = client.chat.completions.create(
-            model=config["model"],
+            model=config.model,
             messages=messages,
             response_format={"type": "json_object"},
         )
@@ -49,9 +49,7 @@ class FtlFile:
         translation = json.loads(response.choices[0].message.content)
         parser = Parser(translation)
 
-        with open(
-            os.path.join(config["ftl_root_path"], self.lang, self.name), "a"
-        ) as f:
+        with open(os.path.join(config.root, self.lang, self.name), "a") as f:
             f.write(parser.get_ftl())
 
 

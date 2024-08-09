@@ -15,7 +15,7 @@ setup(
     package_data={"gpt_ftl": ["config.toml"]},
     entry_points={
         "console_scripts": [
-            "gpt_ftl=gpt_ftl.main:main",
+            "gpt-ftl=gpt_ftl.main:main",
         ],
     },
     author="Lara Kayaalp",

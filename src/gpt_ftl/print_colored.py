@@ -14,10 +14,6 @@ def format_list(l):
     return "\n".join([f"- {format_value(elem)}" for elem in l])
 
 
-def format_dict(d):
-    return "\n".join([f"- {format_value(key)}: {value}" for key, value in d.items()])
-
-
 def print_warning(s):
     print_with_lock(Fore.YELLOW + s)
 

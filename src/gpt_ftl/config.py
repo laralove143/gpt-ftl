@@ -1,5 +1,6 @@
 import importlib.resources
 import os.path
+from argparse import ArgumentParser
 
 import tomli
 import tomli_w
@@ -39,6 +40,8 @@ class Config:
 
         self.toml = toml
 
+        self.set_args()
+
     def __getitem__(self, item):
         return self.toml[item]
 
@@ -47,6 +50,42 @@ class Config:
 
         with open("config.toml", "wb") as f:
             tomli_w.dump(self.toml, f)
+
+    def set_args(self):
+        parser = ArgumentParser(
+            description="Generate Fluent Translation List files using OpenAI's GPT",
+            epilog="Made with ❤️ by Lara Kayaalp",
+        )
+
+        parser.add_argument(
+            "root",
+            help="absolute path to the root directory of the FTL files, every subdirectory must be a directory with a "
+            "language code, the files in the subdirectories must be FTL files",
+        )
+
+        parser.add_argument(
+            "base_lang",
+            help="language to translate from, must match a directory in the FTL root path",
+        )
+
+        parser.add_argument(
+            "--api-key, -k",
+            default=os.getenv("OPENAI_API_KEY"),
+            help="OpenAI API key, can be obtained from https://platform.openai.com/api-keys, the key must have model "
+            "capabilities allowed (default: environment variable OPENAI_API_KEY)",
+            dest="api_key",
+        )
+
+        parser.add_argument(
+            "--model, -m",
+            default="gpt-4o",
+            help="model to use for translation, models can be found at https://platform.openai.com/docs/models, the model "
+            "must support JSON mode, pricing for models can be found at https://openai.com/api/pricing "
+            "(default: %(default)s)",
+            dest="model",
+        )
+
+        parser.parse_args(namespace=self)
 
     def get_messages(self, body, lang, translate_content):
         prompts = self["prompts"]
@@ -88,13 +127,3 @@ class Config:
         return [
             {"role": "system", "content": content} for content in system_messages
         ] + [{"role": "user", "content": user_message}]
-
-
-def get_env(key):
-    val = os.getenv(key)
-
-    if not val:
-        print_error(f"Please set the environment variable: {format_value(key)}.")
-        exit(1)
-
-    return val

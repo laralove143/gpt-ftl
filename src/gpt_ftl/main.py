@@ -4,15 +4,15 @@ from threading import Thread
 import colorama
 from openai import OpenAI
 
-from gpt_ftl.config import Config, get_env
+from gpt_ftl.config import Config
 from gpt_ftl.ftl_file import get_base_files, get_file, get_path
 from gpt_ftl.print_colored import (
     print_action_start,
     print_action_done,
     print_batch_action,
     format_value,
-    format_dict,
     format_list,
+    print_error,
 )
 
 
@@ -21,38 +21,31 @@ def main():
 
     print_action_start(format_value("Welcome to GPT FTL!"))
 
-    print_action_start("Loading configuration...")
     config = Config()
 
-    api_key = get_env("OPENAI_API_KEY")
-    base_lang = get_env("BASE_LANG")
-    model = get_env("MODEL")
-    root = get_env("FTL_ROOT_PATH")
+    if not config.api_key:
+        print_error(
+            f"Please set the environment variable {format_value("OPENAI_API_KEY")} or pass it with the "
+            f"{format_value("--api-key")} argument."
+        )
+        exit(1)
 
-    print_action_done(
-        f"Configuration loaded:\n{format_dict({
-            "Base language": base_lang,
-            "Model": model,
-            "FTL Root Path": root,
-        })}"
-    )
-
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=config.api_key)
 
     print_action_start("Getting files to translate...")
-    base_files = get_base_files(root, base_lang)
+    base_files = get_base_files(config.root, config.base_lang)
     print_action_done(
         f"Files to translate:\n{format_list([file.name for file in base_files])}"
     )
 
     print_action_start("Getting target languages...")
-    langs = [lang for lang in os.listdir(root) if lang != base_lang]
+    langs = [lang for lang in os.listdir(config.root) if lang != config.base_lang]
     print_action_done(f"Target languages:\n{format_list(langs)}")
 
     threads = []
     for file_idx, base_file in enumerate(base_files):
         for lang_idx, lang in enumerate(langs):
-            path = get_path(root, lang, base_file.name)
+            path = get_path(config.root, lang, base_file.name)
             file = get_file(path, lang)
 
             thread = Thread(
