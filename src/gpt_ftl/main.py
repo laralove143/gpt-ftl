@@ -4,6 +4,7 @@ from threading import Thread
 import colorama
 from openai import OpenAI
 
+from gpt_ftl import strip_comments
 from gpt_ftl.config import Config
 from gpt_ftl.ftl_file import get_base_files, get_file, get_path
 from gpt_ftl.print_colored import (
@@ -22,6 +23,10 @@ def main():
     print_action_start(format_value("Welcome to GPT FTL!"))
 
     config = Config()
+
+    if config.subcommand == "strip-comments":
+        strip_comments.main(config)
+        return
 
     if not config.api_key:
         print_error(

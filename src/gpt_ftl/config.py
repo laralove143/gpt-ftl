@@ -56,19 +56,20 @@ class Config:
             description="Generate Fluent Translation List files using OpenAI's GPT",
             epilog="Made with ❤️ by Lara Kayaalp",
         )
+        subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
-        parser.add_argument(
-            "root",
-            help="absolute path to the root directory of the FTL files, every subdirectory must be a directory with a "
-            "language code, the files in the subdirectories must be FTL files",
+        translate_parser = subparsers.add_parser(
+            "translate", help="Translate FTL files"
         )
 
-        parser.add_argument(
+        add_root_argument(translate_parser)
+
+        translate_parser.add_argument(
             "base_lang",
             help="language to translate from, must match a directory in the FTL root path",
         )
 
-        parser.add_argument(
+        translate_parser.add_argument(
             "--api-key, -k",
             default=os.getenv("OPENAI_API_KEY"),
             help="OpenAI API key, can be obtained from https://platform.openai.com/api-keys, the key must have model "
@@ -76,7 +77,7 @@ class Config:
             dest="api_key",
         )
 
-        parser.add_argument(
+        translate_parser.add_argument(
             "--model, -m",
             default="gpt-4o",
             help="model to use for translation, models can be found at https://platform.openai.com/docs/models, the model "
@@ -84,6 +85,13 @@ class Config:
             "(default: %(default)s)",
             dest="model",
         )
+
+        strip_comments_parser = subparsers.add_parser(
+            "strip-comments",
+            help="Strip comments from FTL files, useful for removing comments added to provide context to GPT",
+        )
+
+        add_root_argument(strip_comments_parser)
 
         parser.parse_args(namespace=self)
 
@@ -127,3 +135,11 @@ class Config:
         return [
             {"role": "system", "content": content} for content in system_messages
         ] + [{"role": "user", "content": user_message}]
+
+
+def add_root_argument(parser):
+    parser.add_argument(
+        "root",
+        help="absolute path to the root directory of the FTL files, every subdirectory must be a directory with a "
+        "language code, the files in the subdirectories must be FTL files",
+    )
