@@ -116,35 +116,31 @@ class Config:
     def get_messages(self, body, lang, translate_content):
         prompts = self["prompts"]
 
-        system_messages = [
-            prompts["role"],
-            prompts["assignment"],
-        ]
+        system_messages = {prompts["role"], prompts["assignment"]}
 
-        custom_prompts = prompts["custom"]
-        if custom_prompts:
-            system_messages += custom_prompts
+        if prompts["custom"]:
+            system_messages.update(prompts["custom"])
 
-        if any(isinstance(elem, ResourceComment) for elem in body):
-            system_messages.append(prompts["triple_hash_comment"])
-        if any(isinstance(elem, GroupComment) for elem in body):
-            system_messages.append(prompts["double_hash_comment"])
-        if any(isinstance(elem, Comment) for elem in body):
-            system_messages.append(prompts["single_hash_comment"])
+        for elem in body:
+            if isinstance(elem, ResourceComment):
+                system_messages.add(prompts["triple_hash_comment"])
+            if isinstance(elem, GroupComment):
+                system_messages.add(prompts["double_hash_comment"])
+            if isinstance(elem, Comment):
+                system_messages.add(prompts["single_hash_comment"])
 
-        for message in body:
-            if not isinstance(message, Message):
-                continue
+            if isinstance(elem, Message):
+                if elem.comment:
+                    system_messages.add(prompts["single_hash_comment"])
 
-            for elem in message.value.elements:
-                if not isinstance(elem, Placeable):
-                    continue
+                for message_elem in elem.value.elements:
+                    if not isinstance(message_elem, Placeable):
+                        continue
 
-                system_messages.append(prompts["placeable"])
+                    system_messages.add(prompts["placeable"])
 
-                if isinstance(elem.expression, SelectExpression):
-                    system_messages.append(prompts["selection"])
-                    break
+                    if isinstance(message_elem.expression, SelectExpression):
+                        system_messages.add(prompts["selection"])
 
         user_message = prompts["user"].format(
             lang=lang, translate_content=translate_content

@@ -70,8 +70,11 @@ def main():
 
     for i, thread in enumerate(threads):
         thread.join()
-        file_str = "files" if i + 1 > 1 else "file"
-        print_batch_action(f"Translated {i + 1} {file_str}...", i + 1, len(threads))
+        print_batch_action(
+            f"Translated {i + 1} {"files" if i + 1 > 1 else "file"}...",
+            i + 1,
+            len(threads),
+        )
 
 
 if __name__ == "__main__":
