@@ -85,7 +85,19 @@ class FtlMessage:
         self.comments = comments
 
 
-def get_base_files(root, base_lang):
+def get_paths(root):
+    paths = []
+    for [dirname, _, filenames] in os.walk(root):
+        paths += [
+            os.path.join(dirname, filename)
+            for filename in filenames
+            if filename.endswith(".ftl")
+        ]
+
+    return paths
+
+
+def get_base_file_paths(root, base_lang):
     files = []
 
     for filename in os.listdir(os.path.join(root, base_lang)):

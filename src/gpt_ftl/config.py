@@ -70,7 +70,8 @@ class Config:
         )
 
         translate_parser.add_argument(
-            "--api-key, -k",
+            "--api-key",
+            "-k",
             default=os.getenv("OPENAI_API_KEY"),
             help="OpenAI API key, can be obtained from https://platform.openai.com/api-keys, the key must have model "
             "capabilities allowed (default: environment variable OPENAI_API_KEY)",
@@ -78,7 +79,8 @@ class Config:
         )
 
         translate_parser.add_argument(
-            "--model, -m",
+            "--model",
+            "-m",
             default="gpt-4o",
             help="model to use for translation, models can be found at https://platform.openai.com/docs/models, the model "
             "must support JSON mode, pricing for models can be found at https://openai.com/api/pricing "
@@ -92,6 +94,22 @@ class Config:
         )
 
         add_root_argument(strip_comments_parser)
+
+        sort_parser = subparsers.add_parser(
+            "sort",
+            help="Sort messages in FTL files alphabetically, useful because translations returned by GPT aren't "
+            "guaranteed to match the ordering of the original messages",
+        )
+
+        add_root_argument(sort_parser)
+
+        sort_parser.add_argument(
+            "--separate-by-newline",
+            "-s",
+            action="store_true",
+            help="separate messages with newline (default: off)",
+            dest="separate",
+        )
 
         parser.parse_args(namespace=self)
 

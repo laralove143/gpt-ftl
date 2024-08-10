@@ -4,9 +4,9 @@ from threading import Thread
 import colorama
 from openai import OpenAI
 
-from gpt_ftl import strip_comments
+from gpt_ftl import strip_comments, sort
 from gpt_ftl.config import Config
-from gpt_ftl.ftl_file import get_base_files, get_file, get_path
+from gpt_ftl.ftl_file import get_base_file_paths, get_file, get_path
 from gpt_ftl.print_colored import (
     print_action_start,
     print_action_done,
@@ -27,6 +27,9 @@ def main():
     if config.subcommand == "strip-comments":
         strip_comments.main(config)
         return
+    elif config.subcommand == "sort":
+        sort.main(config)
+        return
 
     if not config.api_key:
         print_error(
@@ -38,7 +41,7 @@ def main():
     client = OpenAI(api_key=config.api_key)
 
     print_action_start("Getting files to translate...")
-    base_files = get_base_files(config.root, config.base_lang)
+    base_files = get_base_file_paths(config.root, config.base_lang)
     print_action_done(
         f"Files to translate:\n{format_list([file.name for file in base_files])}"
     )

@@ -1,28 +1,11 @@
 import os
 
+from gpt_ftl.ftl_file import get_paths
 from gpt_ftl.print_colored import print_action_start, format_value, print_batch_action
 
 
-def main(config):
-    print_action_start("Stripping comments...")
-
-    paths = []
-    for [dirname, _, filenames] in os.walk(config.root):
-        paths += [
-            os.path.join(dirname, filename)
-            for filename in filenames
-            if filename.endswith(".ftl")
-        ]
-
-    for i, path in enumerate(paths):
-        print_batch_action(
-            f"Stripping comments from {format_value(path)}...", i + 1, len(paths)
-        )
-        with open(path, "r") as f:
-            content = strip_comments(f.read())
-
-        with open(path, "w") as f:
-            f.write(content)
+def is_comment(line):
+    return line.startswith("#")
 
 
 def strip_comments(content):
@@ -44,5 +27,18 @@ def strip_comments(content):
     return new_content
 
 
-def is_comment(line):
-    return line.startswith("#")
+def main(config):
+    print_action_start("Stripping comments...")
+
+    paths = get_paths(config.root)
+
+    for i, path in enumerate(paths):
+        print_batch_action(
+            f"Stripping comments from {format_value(path)}...", i + 1, len(paths)
+        )
+
+        with open(path, "r") as f:
+            content = strip_comments(f.read())
+
+        with open(path, "w") as f:
+            f.write(content)
