@@ -14,6 +14,7 @@ from gpt_ftl.print_colored import (
     format_value,
     format_list,
     print_error,
+    footer,
 )
 
 
@@ -75,6 +76,11 @@ def main():
             i + 1,
             len(threads),
         )
+
+    print_action_done(
+        "All files translated and written to their respective directories."
+    )
+    print_action_start(f"{format_value("Thank you for using GPT FTL!")}\n{footer()}")
 
 
 if __name__ == "__main__":

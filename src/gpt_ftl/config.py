@@ -13,7 +13,7 @@ from fluent.syntax.ast import (
     SelectExpression,
 )
 
-from gpt_ftl.print_colored import print_action_done, format_value, print_error
+from gpt_ftl.print_colored import print_action_done, format_value, footer
 
 
 class Config:
@@ -54,7 +54,7 @@ class Config:
     def set_args(self):
         parser = ArgumentParser(
             description="Generate Fluent Translation List files using OpenAI's GPT",
-            epilog="Made with ❤️ by Lara Kayaalp",
+            epilog=footer(),
         )
         subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
