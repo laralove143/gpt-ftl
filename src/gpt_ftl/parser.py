@@ -1,3 +1,6 @@
+from fluent.syntax.ast import SelectExpression, Placeable
+
+
 class Parser:
     def __init__(self, json):
         self.messages = [MessageParser(message) for message in json.items()]
@@ -11,6 +14,7 @@ class MessageParser:
         self.identifier = None
         self.value = None
         self.comments = None
+        self.ftl_message = None
 
         if json:
             self.init_from_json(json)
@@ -32,6 +36,17 @@ class MessageParser:
         self.identifier = message.id.name
         self.value = content[message.value.span.start : message.value.span.end]
         self.comments = message.comment.content if message.comment else None
+        self.ftl_message = message
+
+    def contains_nested_selection(self):
+        for i, elem in enumerate(self.ftl_message.value.elements):
+            if i == 0:
+                continue
+
+            if isinstance(elem, Placeable) and isinstance(
+                elem.expression, SelectExpression
+            ):
+                return True
 
     def get_ftl(self):
         ftl = ""

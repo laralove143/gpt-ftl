@@ -22,21 +22,26 @@ class FtlFile:
             self.message_identifiers.append(message.id.name)
 
     def write_translation(self, base_file, client, config):
-        translate_messages = base_file.messages_to_translate(self.message_identifiers)
-        if not translate_messages:
-            print_warning(
-                f"Skipping {format_value(base_file.name)} for {format_value(self.lang)}. All messages are already "
-                "translated."
-            )
-            return
-        if translate_messages != base_file.messages:
+        filtered_messages = base_file.messages_filtered(self.message_identifiers)
+        if filtered_messages.existing_messages:
             print_warning(
                 f"Skipping already translated messages in {format_value(base_file.name)} "
-                f"for {format_value(self.lang)}:\n{format_list([message.identifier for message in translate_messages])}"
+                f"for {format_value(self.lang)}:\n{format_list(
+                    [message.identifier for message in filtered_messages.existing_messages]
+                )}"
             )
+        if filtered_messages.nested_selection_messages:
+            print_warning(
+                f"Skipping messages with nested selections in {format_value(base_file.name)} "
+                f"for {format_value(self.lang)}:\n{format_list(
+                    [message.identifier for message in filtered_messages.nested_selection_messages]
+                )}"
+            )
+        if not filtered_messages.messages:
+            return
 
         translate_content = "\n".join(
-            message.get_ftl() for message in translate_messages
+            message.get_ftl() for message in filtered_messages.messages
         )
 
         messages = config.get_messages(base_file.body, self.lang, translate_content)
@@ -71,12 +76,26 @@ class BaseFtlFile(FtlFile):
                 )
             )
 
-    def messages_to_translate(self, identifiers):
-        return [
-            message
-            for message in self.messages
-            if message.identifier not in identifiers
-        ]
+    def messages_filtered(self, identifiers):
+        filtered = FilteredMessages([], [], [])
+        for message in self.messages:
+            if message.identifier in identifiers:
+                filtered.existing_messages.append(message)
+                continue
+            elif message.contains_nested_selection():
+                filtered.nested_selection_messages.append(message)
+                continue
+
+            filtered.messages.append(message)
+
+        return filtered
+
+
+class FilteredMessages:
+    def __init__(self, messages, existing_messages, nested_selection_messages):
+        self.messages = messages
+        self.existing_messages = existing_messages
+        self.nested_selection_messages = nested_selection_messages
 
 
 class FtlMessage:
