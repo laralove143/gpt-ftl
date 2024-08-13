@@ -34,8 +34,8 @@ def main():
 
     if not config.api_key:
         print_error(
-            f"Please set the environment variable {format_value("OPENAI_API_KEY")} or pass it with the "
-            f"{format_value("--api-key")} argument."
+            f"Please set the environment variable {format_value('OPENAI_API_KEY')} or pass it with the "
+            f"{format_value('--api-key')} argument."
         )
         exit(1)
 
@@ -72,7 +72,7 @@ def main():
     for i, thread in enumerate(threads):
         thread.join()
         print_batch_action(
-            f"Translated {i + 1} {"files" if i + 1 > 1 else "file"}...",
+            f"Translated {i + 1} {'files' if i + 1 > 1 else 'file'}...",
             i + 1,
             len(threads),
         )
@@ -80,7 +80,7 @@ def main():
     print_action_done(
         "All files translated and written to their respective directories."
     )
-    print_action_start(f"{format_value("Thank you for using GPT FTL!")}\n{footer()}")
+    print_action_start(f"{format_value('Thank you for using GPT FTL!')}\n{footer()}")
 
 
 if __name__ == "__main__":

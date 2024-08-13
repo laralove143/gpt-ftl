@@ -12,6 +12,7 @@ setup(
         "tomli",
         "tomli-w",
     ],
+    extras_require={"dev": ["black"]},
     package_data={"gpt_ftl": ["config.toml"]},
     entry_points={
         "console_scripts": [
@@ -32,6 +33,11 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Software Development :: Localization",
     ],
     license="MIT",

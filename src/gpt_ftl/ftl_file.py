@@ -26,16 +26,14 @@ class FtlFile:
         if filtered_messages.existing_messages:
             print_warning(
                 f"Skipping already translated messages in {format_value(base_file.name)} "
-                f"for {format_value(self.lang)}:\n{format_list(
-                    [message.identifier for message in filtered_messages.existing_messages]
-                )}"
+                f"for {format_value(self.lang)}:\n"
+                f"{format_list([message.identifier for message in filtered_messages.existing_messages])}"
             )
         if filtered_messages.nested_selection_messages:
             print_warning(
                 f"Skipping messages with nested selections in {format_value(base_file.name)} "
-                f"for {format_value(self.lang)}:\n{format_list(
-                    [message.identifier for message in filtered_messages.nested_selection_messages]
-                )}"
+                f"for {format_value(self.lang)}:\n"
+                f"{format_list([message.identifier for message in filtered_messages.nested_selection_messages])}"
             )
         if not filtered_messages.messages:
             return
@@ -119,6 +117,7 @@ def get_paths(root):
 def get_base_file_paths(root, base_lang):
     files = []
 
+    # noinspection PyTypeChecker
     for filename in os.listdir(os.path.join(root, base_lang)):
         if filename.endswith(".ftl"):
             with open(os.path.join(root, base_lang, filename), "r") as f:

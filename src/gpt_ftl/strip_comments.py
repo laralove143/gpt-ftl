@@ -1,5 +1,3 @@
-import os
-
 from gpt_ftl.ftl_file import get_paths
 from gpt_ftl.print_colored import print_action_start, format_value, print_batch_action
 
