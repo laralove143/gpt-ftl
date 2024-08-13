@@ -13,7 +13,7 @@ from fluent.syntax.ast import (
     SelectExpression,
 )
 
-from gpt_ftl.print_colored import print_action_done, format_value, footer
+from gpt_ftl.print_colored import print_action_done, format_value, footer, format_footer
 
 
 class Config:
@@ -35,8 +35,19 @@ class Config:
                 f"Created default configuration file at {format_value(config_path)}. Edit it to change or add prompts."
             )
 
-        with open(config_path, "rb") as f:
-            toml = tomli.load(f)
+        with open(config_path, "r") as f:
+            content = f.read()
+
+            if content != default:
+                custom_config_footer = (
+                    "If the changes might be relevant to other users, please consider sharing the custom configuration "
+                    "at https://lara.lv/gpt_ftl/issues/new."
+                )
+                print_action_done(
+                    f"Loaded custom configuration.\n{format_footer(custom_config_footer)}"
+                )
+
+            toml = tomli.loads(content)
 
         self.toml = toml
 

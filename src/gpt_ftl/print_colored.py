@@ -14,11 +14,14 @@ def format_list(l):
     return "\n".join([f"- {format_value(elem)}" for elem in l])
 
 
+def format_footer(s):
+    return Style.DIM + s + Style.NORMAL
+
+
 def footer():
-    return (
-        Style.DIM
-        + "Made with ❤️ by Lara Kayaalp. \nIf you enjoy using this tool, consider supporting me at https://sponsor.lara.lv."
-        + Style.NORMAL
+    return format_footer(
+        "Made with ❤️ by Lara Kayaalp. \nIf you enjoy using this tool, consider supporting me at "
+        "https://sponsor.lara.lv."
     )
 
 
